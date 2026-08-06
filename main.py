@@ -502,7 +502,10 @@ class MainWindow(QMainWindow):
         h_theme = QHBoxLayout()
         h_theme.addWidget(QLabel("Tema Overlay:"))
         self.combo_theme = QComboBox()
-        self.combo_theme.addItems(["Dark Neon", "Cyberpunk", "Glassmorphism", "Clean Minimal", "Soft Pastel"])
+        self.combo_theme.addItems([
+            "Dark Neon", "Cyberpunk", "Glassmorphism", "Clean Minimal", "Soft Pastel",
+            "Forest Green", "Sunset Orange", "Ocean Blue", "Dark Gold", "Midnight Purple",
+        ])
         self.combo_theme.setCurrentText(self.config.get("theme", "Dark Neon"))
         h_theme.addWidget(self.combo_theme)
         gl_ov.addLayout(h_theme)
@@ -635,7 +638,7 @@ class MainWindow(QMainWindow):
         self.worker.start()
 
         self.btn_connect.setEnabled(False)
-        self.btn_connect.setText("🔄 Sedang Terhubung...")
+        self.btn_connect.setText("🔄 Sedang Menghubungkan...")
         self.btn_disconnect.setEnabled(True)
 
     def _disconnect_live(self):
@@ -715,6 +718,11 @@ class MainWindow(QMainWindow):
     def _on_worker_status(self, msg: str):
         self.lbl_status.setText(msg)
         self.lbl_status.setStyleSheet("color:#10B981;font-size:11px;")
+        # Update button text berdasarkan status koneksi
+        if "Live chat terhubung" in msg or "terhubung!" in msg.lower():
+            self.btn_connect.setText("✅ Terhubung")
+        elif "Menghubungkan" in msg or "Menunggu" in msg:
+            self.btn_connect.setText("🔄 Sedang Menghubungkan...")
 
     # ── Minimize / Restore detection ─────────────────────────────────────────
     def changeEvent(self, event):

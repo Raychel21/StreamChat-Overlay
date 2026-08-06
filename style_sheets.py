@@ -372,6 +372,356 @@ THEMES = {
         #PinnedDivider {
             color: rgba(255, 198, 255, 0.25);
         }
+    """,
+
+    "Forest Green": """
+        QWidget#CentralWidget {
+            background-color: rgba(10, 28, 15, 220);
+            border-radius: 12px;
+            border: 1px solid rgba(52, 211, 100, 0.45);
+        }
+        QLabel {
+            color: #D1FAE5;
+            font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', Arial, sans-serif;
+            line-height: 1.4;
+        }
+        QListWidget {
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+        QListWidget::item {
+            background: rgba(16, 85, 40, 170);
+            border-radius: 8px;
+            margin: 2px 4px;
+            border: 1px solid rgba(52, 211, 100, 0.15);
+        }
+        QListWidget::item:hover {
+            background: rgba(22, 110, 55, 200);
+            border: 1px solid rgba(52, 211, 100, 0.5);
+        }
+        QScrollBar:vertical {
+            background: rgba(255, 255, 255, 0.05);
+            width: 6px;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical {
+            background: rgba(52, 211, 100, 0.5);
+            border-radius: 3px;
+            min-height: 20px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+        #HeaderBar {
+            background: rgba(6, 20, 10, 235);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-bottom: 1px solid rgba(52, 211, 100, 0.35);
+        }
+        #ViewerBadge {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #16A34A, stop:1 #22C55E);
+            color: white;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 3px 10px;
+        }
+        #PinnedContainer {
+            background: rgba(52, 211, 100, 0.09);
+            border-left: 3px solid #34D364;
+            border-bottom: 1px solid rgba(52, 211, 100, 0.2);
+        }
+        #PinLabel {
+            color: #34D364;
+            font-size: 8pt;
+        }
+        #PinnedMessage {
+            color: #D1FAE5;
+        }
+        #PinnedDivider {
+            color: rgba(52, 211, 100, 0.2);
+        }
+    """,
+
+    "Sunset Orange": """
+        QWidget#CentralWidget {
+            background-color: rgba(28, 12, 5, 220);
+            border-radius: 12px;
+            border: 1px solid rgba(251, 113, 33, 0.5);
+        }
+        QLabel {
+            color: #FEF3C7;
+            font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', Arial, sans-serif;
+            line-height: 1.4;
+        }
+        QListWidget {
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+        QListWidget::item {
+            background: rgba(120, 40, 8, 165);
+            border-radius: 8px;
+            margin: 2px 4px;
+            border: 1px solid rgba(251, 113, 33, 0.15);
+        }
+        QListWidget::item:hover {
+            background: rgba(160, 55, 10, 200);
+            border: 1px solid rgba(251, 113, 33, 0.55);
+        }
+        QScrollBar:vertical {
+            background: rgba(255, 255, 255, 0.05);
+            width: 6px;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical {
+            background: rgba(251, 113, 33, 0.55);
+            border-radius: 3px;
+            min-height: 20px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+        #HeaderBar {
+            background: rgba(20, 8, 2, 235);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-bottom: 1px solid rgba(251, 113, 33, 0.4);
+        }
+        #ViewerBadge {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #EA580C, stop:1 #F97316);
+            color: white;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 3px 10px;
+        }
+        #PinnedContainer {
+            background: rgba(251, 113, 33, 0.09);
+            border-left: 3px solid #FB7121;
+            border-bottom: 1px solid rgba(251, 113, 33, 0.2);
+        }
+        #PinLabel {
+            color: #FB7121;
+            font-size: 8pt;
+        }
+        #PinnedMessage {
+            color: #FEF3C7;
+        }
+        #PinnedDivider {
+            color: rgba(251, 113, 33, 0.2);
+        }
+    """,
+
+    "Ocean Blue": """
+        QWidget#CentralWidget {
+            background-color: rgba(5, 15, 40, 220);
+            border-radius: 12px;
+            border: 1px solid rgba(56, 189, 248, 0.45);
+        }
+        QLabel {
+            color: #E0F2FE;
+            font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', Arial, sans-serif;
+            line-height: 1.4;
+        }
+        QListWidget {
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+        QListWidget::item {
+            background: rgba(7, 45, 100, 170);
+            border-radius: 8px;
+            margin: 2px 4px;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+        }
+        QListWidget::item:hover {
+            background: rgba(10, 60, 140, 200);
+            border: 1px solid rgba(56, 189, 248, 0.55);
+        }
+        QScrollBar:vertical {
+            background: rgba(255, 255, 255, 0.05);
+            width: 6px;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical {
+            background: rgba(56, 189, 248, 0.5);
+            border-radius: 3px;
+            min-height: 20px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+        #HeaderBar {
+            background: rgba(3, 10, 28, 235);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.35);
+        }
+        #ViewerBadge {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #0284C7, stop:1 #38BDF8);
+            color: white;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 3px 10px;
+        }
+        #PinnedContainer {
+            background: rgba(56, 189, 248, 0.09);
+            border-left: 3px solid #38BDF8;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        #PinLabel {
+            color: #38BDF8;
+            font-size: 8pt;
+        }
+        #PinnedMessage {
+            color: #E0F2FE;
+        }
+        #PinnedDivider {
+            color: rgba(56, 189, 248, 0.2);
+        }
+    """,
+
+    "Dark Gold": """
+        QWidget#CentralWidget {
+            background-color: rgba(14, 10, 2, 225);
+            border-radius: 12px;
+            border: 2px solid rgba(212, 175, 55, 0.6);
+        }
+        QLabel {
+            color: #FFF8DC;
+            font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', Arial, sans-serif;
+            line-height: 1.4;
+        }
+        QListWidget {
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+        QListWidget::item {
+            background: rgba(50, 35, 5, 175);
+            border-radius: 8px;
+            margin: 2px 4px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        QListWidget::item:hover {
+            background: rgba(70, 50, 8, 210);
+            border: 1px solid rgba(212, 175, 55, 0.6);
+        }
+        QScrollBar:vertical {
+            background: rgba(255, 255, 255, 0.05);
+            width: 6px;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical {
+            background: rgba(212, 175, 55, 0.5);
+            border-radius: 3px;
+            min-height: 20px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+        #HeaderBar {
+            background: rgba(8, 5, 0, 240);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.5);
+        }
+        #ViewerBadge {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #B8860B, stop:1 #DAA520);
+            color: #1A0F00;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 3px 10px;
+        }
+        #PinnedContainer {
+            background: rgba(212, 175, 55, 0.10);
+            border-left: 3px solid #D4AF37;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+        }
+        #PinLabel {
+            color: #D4AF37;
+            font-size: 8pt;
+        }
+        #PinnedMessage {
+            color: #FFF8DC;
+        }
+        #PinnedDivider {
+            color: rgba(212, 175, 55, 0.25);
+        }
+    """,
+
+    "Midnight Purple": """
+        QWidget#CentralWidget {
+            background-color: rgba(12, 5, 30, 225);
+            border-radius: 12px;
+            border: 1px solid rgba(167, 139, 250, 0.45);
+        }
+        QLabel {
+            color: #EDE9FE;
+            font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', Arial, sans-serif;
+            line-height: 1.4;
+        }
+        QListWidget {
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+        QListWidget::item {
+            background: rgba(55, 20, 120, 165);
+            border-radius: 8px;
+            margin: 2px 4px;
+            border: 1px solid rgba(167, 139, 250, 0.15);
+        }
+        QListWidget::item:hover {
+            background: rgba(75, 30, 160, 200);
+            border: 1px solid rgba(167, 139, 250, 0.55);
+        }
+        QScrollBar:vertical {
+            background: rgba(255, 255, 255, 0.05);
+            width: 6px;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical {
+            background: rgba(167, 139, 250, 0.5);
+            border-radius: 3px;
+            min-height: 20px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+        #HeaderBar {
+            background: rgba(7, 2, 20, 240);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-bottom: 1px solid rgba(167, 139, 250, 0.35);
+        }
+        #ViewerBadge {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #7C3AED, stop:1 #A78BFA);
+            color: white;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 3px 10px;
+        }
+        #PinnedContainer {
+            background: rgba(167, 139, 250, 0.09);
+            border-left: 3px solid #A78BFA;
+            border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+        }
+        #PinLabel {
+            color: #A78BFA;
+            font-size: 8pt;
+        }
+        #PinnedMessage {
+            color: #EDE9FE;
+        }
+        #PinnedDivider {
+            color: rgba(167, 139, 250, 0.2);
+        }
     """
 }
 
