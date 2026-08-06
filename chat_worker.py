@@ -4,6 +4,7 @@ import re
 import json
 import html
 import hashlib
+import asyncio
 import requests
 from PySide6.QtCore import QThread, Signal
 
@@ -62,8 +63,7 @@ _YT_CLIENT_CONTEXT = {
 
 class ChatWorker(QThread):
     """
-    Worker thread untuk mengambil live chat YouTube.
-    Menggunakan YouTube Internal API langsung (tanpa pytchat).
+    Worker thread untuk mengambil live chat YouTube dan TikTok.
 
     Signals:
         chat_received(author, message, is_superchat, amount, platform)
@@ -88,11 +88,23 @@ class ChatWorker(QThread):
         self._session        = requests.Session()
         self._session.headers.update(_HEADERS)
         self._emitted_pinned = None  # Hindari emit pinned berulang
+        self._tiktok_client  = None  # Referensi ke TikTokLiveClient
+        self._loop           = None  # asyncio event loop untuk TikTok
 
     def update_config(self, connection_type, stream_url, livechat_url):
         self.connection_type = connection_type
         self.stream_url      = stream_url
         self.livechat_url    = livechat_url
+
+    # ── URL Detection ─────────────────────────────────────────────────────────
+    def _detect_platform(self, url: str) -> str:
+        """Deteksi platform dari URL: 'youtube', 'tiktok', atau 'unknown'."""
+        url_lower = url.lower()
+        if "tiktok.com" in url_lower or "vt.tiktok.com" in url_lower:
+            return "tiktok"
+        if any(x in url_lower for x in ("youtube.com", "youtu.be", "live_chat")):
+            return "youtube"
+        return "unknown"
 
     # ── Main Run ──────────────────────────────────────────────────────────────
     def run(self):
@@ -100,15 +112,208 @@ class ChatWorker(QThread):
             self.stream_url if self.connection_type == "stream_url"
             else self.livechat_url
         )
-        video_id = self._extract_video_id(target_url)
-        if video_id:
-            print(f"[ChatWorker] YouTube Video ID: {video_id}")
-            self.status_updated.emit(f"✅ Menghubungkan ke ID: {video_id}...")
-            self._run_youtube_live_chat(video_id)
+        platform = self._detect_platform(target_url)
+
+        if platform == "tiktok":
+            self._run_tiktok(target_url)
         else:
-            msg = "❌ Video ID tidak ditemukan. Pastikan format URL benar."
-            print(f"[ChatWorker] {msg}")
-            self.error_occurred.emit(msg)
+            # Coba YouTube
+            video_id = self._extract_video_id(target_url)
+            if video_id:
+                print(f"[ChatWorker] YouTube Video ID: {video_id}")
+                self.status_updated.emit(f"✅ Menghubungkan ke ID: {video_id}...")
+                self._run_youtube_live_chat(video_id)
+            else:
+                msg = "❌ Video ID tidak ditemukan. Pastikan format URL benar."
+                print(f"[ChatWorker] {msg}")
+                self.error_occurred.emit(msg)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # ██████   TikTok Live Chat
+    # ─────────────────────────────────────────────────────────────────────────
+    def _extract_tiktok_username(self, url: str) -> str | None:
+        """
+        Ekstrak username TikTok dari berbagai format URL.
+        - https://www.tiktok.com/@username/live
+        - https://www.tiktok.com/@username
+        - https://vt.tiktok.com/XXXXX/ (short URL → resolve dulu)
+        - Username langsung (misal: '@username' atau 'username')
+        """
+        # Username langsung (bukan URL)
+        if not url.startswith("http"):
+            return url.lstrip("@").strip() or None
+
+        # tiktok.com/@username pattern
+        m = re.search(r"tiktok\.com/@([A-Za-z0-9_.]+)", url)
+        if m:
+            return m.group(1)
+
+        # Short URL → resolve redirect
+        if "vt.tiktok.com" in url or re.match(r"https?://[^/]*tiktok\.com/[A-Za-z0-9]+", url):
+            try:
+                self.status_updated.emit("🔗 Memproses short URL TikTok...")
+                r = self._session.get(url.strip("/"), timeout=10,
+                                      allow_redirects=True)
+                final_url = r.url
+                m2 = re.search(r"tiktok\.com/@([A-Za-z0-9_.]+)", final_url)
+                if m2:
+                    return m2.group(1)
+                # Coba dari redirect history
+                for resp in r.history:
+                    loc = resp.headers.get("Location", "")
+                    m3 = re.search(r"tiktok\.com/@([A-Za-z0-9_.]+)", loc)
+                    if m3:
+                        return m3.group(1)
+                # Coba dari response text
+                m4 = re.search(r'"uniqueId"\s*:\s*"([^"]+)"', r.text)
+                if m4:
+                    return m4.group(1)
+            except Exception as e:
+                print(f"[ChatWorker] Gagal resolve TikTok short URL: {e}")
+        return None
+
+    def _run_tiktok(self, url: str):
+        """Jalankan TikTok live chat menggunakan TikTokLive library."""
+        username = self._extract_tiktok_username(url)
+        if not username:
+            self.error_occurred.emit(
+                "❌ Username TikTok tidak ditemukan.\n"
+                "Gunakan format: https://www.tiktok.com/@username/live\n"
+                "atau masukkan @username langsung."
+            )
+            return
+
+        self.status_updated.emit(f"🎵 Menghubungkan ke TikTok @{username}...")
+
+        # Jalankan asyncio loop di thread ini
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
+        try:
+            self._loop.run_until_complete(self._tiktok_async(username))
+        except Exception as e:
+            if self.running:
+                print(f"[ChatWorker] TikTok error: {e}")
+                self.error_occurred.emit(f"❌ TikTok Error: {str(e)[:150]}")
+        finally:
+            try:
+                self._loop.close()
+            except Exception:
+                pass
+            self._loop = None
+
+    async def _tiktok_async(self, username: str):
+        """Async handler utama untuk TikTok live chat."""
+        from TikTokLive import TikTokLiveClient
+        from TikTokLive.events import (
+            ConnectEvent, DisconnectEvent, CommentEvent,
+            GiftEvent, JoinEvent, LiveEndEvent,
+        )
+
+        retry_count = 0
+        max_retries = 5
+
+        while self.running and retry_count <= max_retries:
+            client = TikTokLiveClient(unique_id=username)
+            self._tiktok_client = client
+
+            @client.on(ConnectEvent)
+            async def on_connect(event: ConnectEvent):
+                self.status_updated.emit(f"✅ TikTok @{username} terhubung!")
+                nonlocal retry_count
+                retry_count = 0
+
+            @client.on(CommentEvent)
+            async def on_comment(event: CommentEvent):
+                if not self.running:
+                    return
+                try:
+                    author = (
+                        getattr(event.user, "nickname", None)
+                        or getattr(event.user, "unique_id", None)
+                        or "TikTokUser"
+                    )
+                    msg = getattr(event, "comment", "") or ""
+                    if author and msg:
+                        self.chat_received.emit(str(author), str(msg), False, "", "TikTok")
+                except Exception as e:
+                    print(f"[ChatWorker] TikTok comment parse error: {e}")
+
+            @client.on(GiftEvent)
+            async def on_gift(event: GiftEvent):
+                if not self.running:
+                    return
+                try:
+                    author = (
+                        getattr(event.user, "nickname", None)
+                        or getattr(event.user, "unique_id", None)
+                        or "TikTokUser"
+                    )
+                    gift_name  = getattr(event.gift, "name", "Gift") or "Gift"
+                    gift_count = getattr(event, "repeat_count", 1) or 1
+                    msg        = f"🎁 {gift_name} ×{gift_count}"
+                    if author:
+                        self.chat_received.emit(str(author), str(msg), True, f"×{gift_count}", "TikTok")
+                except Exception as e:
+                    print(f"[ChatWorker] TikTok gift parse error: {e}")
+
+            @client.on(JoinEvent)
+            async def on_join(event: JoinEvent):
+                if not self.running:
+                    return
+                try:
+                    count = getattr(event, "viewer_count", None)
+                    if count is not None:
+                        self.viewer_count_updated.emit(int(count))
+                except Exception:
+                    pass
+
+            @client.on(LiveEndEvent)
+            async def on_end(event: LiveEndEvent):
+                print(f"[ChatWorker] TikTok live ended for @{username}")
+                if client.connected:
+                    await client.disconnect()
+
+            @client.on(DisconnectEvent)
+            async def on_disconnect(event: DisconnectEvent):
+                print(f"[ChatWorker] TikTok disconnected from @{username}")
+
+            try:
+                await client.connect()
+            except Exception as e:
+                err_str = str(e)
+                print(f"[ChatWorker] TikTok connect error: {err_str}")
+
+                if not self.running:
+                    break
+
+                retry_count += 1
+                if retry_count > max_retries:
+                    self.error_occurred.emit(
+                        f"❌ Gagal terhubung ke TikTok @{username}.\n"
+                        "Pastikan stream sedang live dan username benar."
+                    )
+                    break
+
+                msg = f"⚠️ TikTok retry {retry_count}/{max_retries}..."
+                self.status_updated.emit(msg)
+
+                # Interruptible sleep
+                for _ in range(80):
+                    if not self.running:
+                        break
+                    await asyncio.sleep(0.1)
+
+            finally:
+                try:
+                    if client.connected:
+                        await client.disconnect()
+                except Exception:
+                    pass
+                self._tiktok_client = None
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # ██████   YouTube Live Chat
+    # ─────────────────────────────────────────────────────────────────────────
 
     # ── Video ID Extraction ────────────────────────────────────────────────────
     def _extract_video_id(self, url: str) -> str | None:
@@ -473,6 +678,17 @@ class ChatWorker(QThread):
     # ── Stop ──────────────────────────────────────────────────────────────────
     def stop(self):
         self.running = False
+
+        # Stop TikTok client jika aktif
+        if self._tiktok_client is not None and self._loop is not None:
+            try:
+                if self._loop.is_running():
+                    asyncio.run_coroutine_threadsafe(
+                        self._tiktok_client.disconnect(), self._loop
+                    )
+            except Exception as e:
+                print(f"[ChatWorker] TikTok stop error: {e}")
+
         try:
             self._session.close()
         except Exception:

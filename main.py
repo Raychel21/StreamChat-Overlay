@@ -12,7 +12,7 @@ from PySide6.QtCore import Qt, QPoint, QSize, QTimer, QEvent
 from PySide6.QtGui import QFont, QFontMetrics
 
 import config_manager
-from style_sheets import THEMES, MAIN_APP_STYLES, get_theme_qss
+from style_sheets import THEMES, MAIN_APP_STYLES, get_theme_qss, DEFAULT_THEME_FONTS, FONT_OPTIONS
 from filter_engine import FilterEngine
 from tts_engine import TTSEngine
 from chat_worker import ChatWorker
@@ -233,10 +233,18 @@ class OverlayWindow(QWidget):
 
     # ── Public API ────────────────────────────────────────────────────────
     def apply_theme(self):
-        theme_name = self.config.get("theme", "Dark Neon")
-        opacity    = self.config.get("opacity", 0.9)
-        qss        = get_theme_qss(theme_name, opacity)
+        theme_name      = self.config.get("theme", "Dark Neon")
+        overlay_opacity = self.config.get("overlay_opacity", self.config.get("opacity", 0.9))
+        chat_opacity    = self.config.get("chat_opacity", 0.9)
+        font_family     = self.config.get("font_family") or DEFAULT_THEME_FONTS.get(theme_name, "Segoe UI")
+        qss             = get_theme_qss(theme_name, overlay_opacity, chat_opacity, font_family=font_family)
         self.container.setStyleSheet(qss)
+
+    def set_platform(self, platform: str):
+        """Update judul header overlay sesuai platform yang sedang aktif."""
+        icons = {"YouTube": "🔴", "TikTok": "🎵", "Twitch": "💜"}
+        icon  = icons.get(platform, "🔴")
+        self.lbl_title.setText(f"{icon} LIVE CHAT - {platform.upper()}")
 
     def update_config(self, config):
         self.config = config
@@ -268,17 +276,21 @@ class OverlayWindow(QWidget):
 
     def add_chat(self, author: str, clean_msg: str, is_superchat: bool, amount: str):
         """Tambahkan item chat ke list. Username dan pesan mengalir secara inline (satu paragraph)."""
-        font_size = self.config.get("font_size", 13)
+        font_size   = self.config.get("font_size", 13)
+        theme_name  = self.config.get("theme", "Dark Neon")
+        font_family = self.config.get("font_family") or DEFAULT_THEME_FONTS.get(theme_name, "Segoe UI")
+        font_families = [font_family, "Segoe UI", "Yu Gothic UI", "Meiryo", "Arial"]
+
         vp_w      = self.chat_list.viewport().width()
         avail_w   = max(200, vp_w - 4)
         inner_w   = avail_w - 20
 
         font_n = QFont()
-        font_n.setFamilies(["Segoe UI", "Yu Gothic UI", "Meiryo", "Arial"])
+        font_n.setFamilies(font_families)
         font_n.setPointSize(font_size)
 
         font_b = QFont()
-        font_b.setFamilies(["Segoe UI", "Yu Gothic UI", "Meiryo", "Arial"])
+        font_b.setFamilies(font_families)
         font_b.setPointSize(font_size)
         font_b.setBold(True)
 
@@ -328,7 +340,7 @@ class OverlayWindow(QWidget):
             lo.addWidget(lbl_m)
             lbl_m_h = _label_height(lbl_m, inner_w, font_size)
 
-        est_h = lbl_m_h + 12
+        est_h = lbl_m_h + 16
 
         list_item = QListWidgetItem()
         list_item.setSizeHint(QSize(avail_w, est_h))
@@ -340,8 +352,8 @@ class OverlayWindow(QWidget):
             try:
                 item_widget.adjustSize()
                 ah = item_widget.sizeHint().height()
-                if ah > 10:
-                    list_item.setSizeHint(QSize(avail_w, max(est_h, ah + 4)))
+                if ah > 0:
+                    list_item.setSizeHint(QSize(avail_w, max(est_h, ah + 10)))
             except RuntimeError:
                 pass
 
@@ -359,22 +371,21 @@ def _label_height(label: QLabel, width: int, font_size: int) -> int:
     fm   = QFontMetrics(label.font())
     text = label.text()
     if not text:
-        return fm.height() + 4
+        return int(fm.height() * 1.35) + 6
 
     clean_text = re.sub(r"<[^>]+>", " ", text)
     has_cjk    = any("\u3040" <= c <= "\u30ff" or "\u4e00" <= c <= "\u9fff" for c in clean_text)
-    extra      = 4 if has_cjk else 0
-    line_h     = fm.height() + extra
+    extra      = 6 if has_cjk else 4
 
     if label.wordWrap():
         h = label.heightForWidth(width)
         if h > 0:
-            return h + extra
-        char_w = fm.averageCharWidth() or 10
+            return int(h * 1.35) + extra + 6
+        char_w = fm.averageCharWidth() or 8
         cpl    = max(1, width // char_w)
         lines  = max(1, (len(clean_text) + cpl - 1) // cpl)
-        return line_h * lines + fm.leading() * max(0, lines - 1)
-    return line_h
+        return int(fm.height() * 1.35) * lines + extra + 8
+    return int(fm.height() * 1.35) + extra + 6
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -444,11 +455,13 @@ class MainWindow(QMainWindow):
 
         grp = QGroupBox("Metode Koneksi Live Chat")
         gl  = QVBoxLayout(grp)
-        self.radio_stream = QRadioButton("Opsi A: Link Streaming (YouTube, Twitch, TikTok)")
-        self.radio_chat   = QRadioButton("Opsi B: Link LiveChat (YouTube, Twitch)")
+        self.radio_stream = QRadioButton("Opsi A: Link Streaming (YouTube / TikTok)")
+        self.radio_chat   = QRadioButton("Opsi B: Link LiveChat (YouTube)")
         self.radio_stream.setChecked(True)
         self.input_stream_url = QLineEdit("")
-        self.input_stream_url.setPlaceholderText("https://www.youtube.com/watch?v=XXXXX")
+        self.input_stream_url.setPlaceholderText(
+            "YouTube: https://youtube.com/watch?v=XXXXX  |  TikTok: https://tiktok.com/@username/live  atau  @username"
+        )
         self.input_chat_url = QLineEdit("")
         self.input_chat_url.setPlaceholderText("https://www.youtube.com/live_chat?is_popout=1&v=XXXXX")
         gl.addWidget(self.radio_stream)
@@ -507,8 +520,19 @@ class MainWindow(QMainWindow):
             "Forest Green", "Sunset Orange", "Ocean Blue", "Dark Gold", "Midnight Purple",
         ])
         self.combo_theme.setCurrentText(self.config.get("theme", "Dark Neon"))
+        self.combo_theme.currentTextChanged.connect(self._on_overlay_theme_change)
         h_theme.addWidget(self.combo_theme)
         gl_ov.addLayout(h_theme)
+
+        h_font_style = QHBoxLayout()
+        h_font_style.addWidget(QLabel("Gaya Font Chat:"))
+        self.combo_font_family = QComboBox()
+        self.combo_font_family.addItems(FONT_OPTIONS)
+        init_font = self.config.get("font_family") or DEFAULT_THEME_FONTS.get(self.config.get("theme", "Dark Neon"), "Segoe UI")
+        self.combo_font_family.setCurrentText(init_font)
+        self.combo_font_family.currentTextChanged.connect(self._on_font_family_change)
+        h_font_style.addWidget(self.combo_font_family)
+        gl_ov.addLayout(h_font_style)
 
         h_font = QHBoxLayout()
         h_font.addWidget(QLabel("Ukuran Font Chat:"))
@@ -517,28 +541,47 @@ class MainWindow(QMainWindow):
         self.slider_fontsize.setValue(self.config.get("font_size", 13))
         self.lbl_fontsize_val = QLabel(f"{self.config.get('font_size', 13)}px")
         self.lbl_fontsize_val.setFixedWidth(36)
-        self.slider_fontsize.valueChanged.connect(
-            lambda v: self.lbl_fontsize_val.setText(f"{v}px")
-        )
+        self.slider_fontsize.valueChanged.connect(self._on_fontsize_change)
         h_font.addWidget(self.slider_fontsize)
         h_font.addWidget(self.lbl_fontsize_val)
         gl_ov.addLayout(h_font)
 
+        # ── Transparansi Background Overlay ─────────────────────────────
         h_opac = QHBoxLayout()
-        h_opac.addWidget(QLabel("Transparansi Overlay:"))
-        self.slider_opacity = QSlider(Qt.Horizontal)
-        self.slider_opacity.setRange(20, 100)
-        self.slider_opacity.setValue(int(self.config.get("opacity", 0.9) * 100))
-        self.slider_opacity.valueChanged.connect(self._on_opacity_change)
-        h_opac.addWidget(self.slider_opacity)
+        h_opac.addWidget(QLabel("Transparansi Bg Overlay:"))
+        self.slider_overlay_opacity = QSlider(Qt.Horizontal)
+        self.slider_overlay_opacity.setRange(5, 100)
+        init_ov = int(self.config.get("overlay_opacity", self.config.get("opacity", 0.9)) * 100)
+        self.slider_overlay_opacity.setValue(init_ov)
+        self.lbl_overlay_opacity_val = QLabel(f"{init_ov}%")
+        self.lbl_overlay_opacity_val.setFixedWidth(36)
+        self.slider_overlay_opacity.valueChanged.connect(self._on_overlay_opacity_change)
+        h_opac.addWidget(self.slider_overlay_opacity)
+        h_opac.addWidget(self.lbl_overlay_opacity_val)
         gl_ov.addLayout(h_opac)
+
+        # ── Transparansi Background Chat ─────────────────────────────────
+        h_chat_opac = QHBoxLayout()
+        h_chat_opac.addWidget(QLabel("Transparansi Bg Chat:   "))
+        self.slider_chat_opacity = QSlider(Qt.Horizontal)
+        self.slider_chat_opacity.setRange(5, 100)
+        init_chat = int(self.config.get("chat_opacity", 0.9) * 100)
+        self.slider_chat_opacity.setValue(init_chat)
+        self.lbl_chat_opacity_val = QLabel(f"{init_chat}%")
+        self.lbl_chat_opacity_val.setFixedWidth(36)
+        self.slider_chat_opacity.valueChanged.connect(self._on_chat_opacity_change)
+        h_chat_opac.addWidget(self.slider_chat_opacity)
+        h_chat_opac.addWidget(self.lbl_chat_opacity_val)
+        gl_ov.addLayout(h_chat_opac)
 
         self.chk_click_through = QCheckBox("Click-Through Mode (Tembus Klik Mouse)")
         self.chk_click_through.setChecked(self.config.get("click_through", False))
+        self.chk_click_through.stateChanged.connect(self._on_click_through_change)
         gl_ov.addWidget(self.chk_click_through)
 
         self.chk_show_viewers = QCheckBox("Tampilkan Badge Jumlah Penonton")
         self.chk_show_viewers.setChecked(self.config.get("show_viewer_count", True))
+        self.chk_show_viewers.stateChanged.connect(self._on_show_viewers_change)
         gl_ov.addWidget(self.chk_show_viewers)
         p2.addWidget(grp_ov)
 
@@ -583,10 +626,51 @@ class MainWindow(QMainWindow):
             self.lbl_mode_title.setText("🔗 Hubungkan Live Chat Streaming")
             self.btn_toggle.setText("⚙️ Pengaturan")
 
-    def _on_opacity_change(self, val):
-        self.config["opacity"] = val / 100.0
+    def _on_overlay_opacity_change(self, val):
+        self.config["overlay_opacity"] = val / 100.0
+        self.lbl_overlay_opacity_val.setText(f"{val}%")
+        config_manager.save_config(self.config)
         if self.overlay:
             self.overlay.update_config(self.config)
+
+    def _on_chat_opacity_change(self, val):
+        self.config["chat_opacity"] = val / 100.0
+        self.lbl_chat_opacity_val.setText(f"{val}%")
+        config_manager.save_config(self.config)
+        if self.overlay:
+            self.overlay.update_config(self.config)
+
+    def _on_overlay_theme_change(self, text):
+        self.config["theme"] = text
+        default_font = DEFAULT_THEME_FONTS.get(text, "Segoe UI")
+        self.config["font_family"] = default_font
+        self.combo_font_family.setCurrentText(default_font)
+        config_manager.save_config(self.config)
+        if self.overlay:
+            self.overlay.update_config(self.config)
+
+    def _on_font_family_change(self, text):
+        self.config["font_family"] = text
+        config_manager.save_config(self.config)
+        if self.overlay:
+            self.overlay.update_config(self.config)
+
+    def _on_fontsize_change(self, v):
+        self.lbl_fontsize_val.setText(f"{v}px")
+        self.config["font_size"] = v
+        config_manager.save_config(self.config)
+
+    def _on_click_through_change(self, state):
+        self.config["click_through"] = bool(state)
+        config_manager.save_config(self.config)
+        if self.overlay and self.overlay.isVisible():
+            _set_click_through(self.overlay, bool(state))
+
+    def _on_show_viewers_change(self, state):
+        self.config["show_viewer_count"] = bool(state)
+        config_manager.save_config(self.config)
+        if self.overlay:
+            self.overlay.badge_viewers.setVisible(bool(state))
 
     def _on_main_theme_change(self, text):
         self.config["main_theme"] = text
@@ -608,6 +692,13 @@ class MainWindow(QMainWindow):
             self.lbl_status.setStyleSheet("color:#F59E0B;font-size:11px;")
             return
 
+        # Deteksi platform untuk judul overlay
+        url_lower = url.lower()
+        if "tiktok.com" in url_lower or "vt.tiktok.com" in url_lower or url.strip().startswith("@"):
+            platform = "TikTok"
+        else:
+            platform = "YouTube"
+
         self.lbl_status.setText(f"✅ Menghubungkan ke: {url[:55]}...")
         self.lbl_status.setStyleSheet("color:#10B981;font-size:11px;")
         self.config["connection_type"] = conn_type
@@ -622,6 +713,7 @@ class MainWindow(QMainWindow):
             self.overlay.chat_list.clear()
             self.overlay.set_pinned("", "")   # reset pinned
             self.overlay.update_config(self.config)
+        self.overlay.set_platform(platform)
         self.overlay.show()
         self.overlay.raise_()
 
@@ -657,7 +749,9 @@ class MainWindow(QMainWindow):
     def _save_settings(self):
         self.config["theme"]             = self.combo_theme.currentText()
         self.config["main_theme"]        = self.combo_main_theme.currentText()
-        self.config["opacity"]           = self.slider_opacity.value() / 100.0
+        self.config["overlay_opacity"]   = self.slider_overlay_opacity.value() / 100.0
+        self.config["chat_opacity"]      = self.slider_chat_opacity.value() / 100.0
+        self.config["opacity"]           = self.config["overlay_opacity"]  # backward compat
         self.config["font_size"]         = self.slider_fontsize.value()
         self.config["click_through"]     = self.chk_click_through.isChecked()
         self.config["show_viewer_count"] = self.chk_show_viewers.isChecked()
@@ -719,9 +813,9 @@ class MainWindow(QMainWindow):
         self.lbl_status.setText(msg)
         self.lbl_status.setStyleSheet("color:#10B981;font-size:11px;")
         # Update button text berdasarkan status koneksi
-        if "Live chat terhubung" in msg or "terhubung!" in msg.lower():
+        if any(x in msg for x in ("Live chat terhubung", "terhubung!")):
             self.btn_connect.setText("✅ Terhubung")
-        elif "Menghubungkan" in msg or "Menunggu" in msg:
+        elif any(x in msg for x in ("Menghubungkan", "Menunggu", "Memproses", "retry")):
             self.btn_connect.setText("🔄 Sedang Menghubungkan...")
 
     # ── Minimize / Restore detection ─────────────────────────────────────────
