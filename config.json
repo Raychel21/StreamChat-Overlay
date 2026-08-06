@@ -1,1 +1,24 @@
-{}
+{
+    "connection_type": "stream_url",
+    "stream_url": "https://www.youtube.com/live/VgdAA0Gdzn0?si=ScZgkKavgPR9zpJ_",
+    "livechat_url": "https://www.youtube.com/live_chat?is_popout=1&v=VgdAA0Gdzn0",
+    "theme": "Glassmorphism",
+    "main_theme": "Dark",
+    "always_on_top": true,
+    "opacity": 0.2,
+    "click_through": true,
+    "font_size": 10,
+    "tts_enabled": false,
+    "tts_speed": 170,
+    "tts_volume": 0.8,
+    "filter_commands": true,
+    "bad_words_filter": true,
+    "custom_bad_words": [
+        "badword1",
+        "badword2"
+    ],
+    "show_viewer_count": true,
+    "platform": "YouTube",
+    "channel_id": "AizawaEma",
+    "highlight_superchats": true
+}

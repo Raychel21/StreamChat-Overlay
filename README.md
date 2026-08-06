@@ -67,13 +67,13 @@ uv pip install PySide6 pyinstaller pyinstaller-hooks-contrib
 ### 3. Menjalankan Aplikasi
 Anda dapat menjalankan script secara langsung untuk melakukan testing:
 ```bash
-python stream-chat.py
+python main.py
 ```
 
 ### 4. Build menjadi .exe
 Untuk melakukan *compile* dari `.py` menjadi file `.exe` yang siap digunakan (standalone):
 ```bash
-pyinstaller --clean --noconfirm --noconsole --onedir --upx-exclude="Qt*.dll" --name "StreamChatOverlay" stream-chat.py
+pyinstaller --clean --noconfirm --noconsole --onedir --upx-exclude="Qt*.dll" --name "StreamChatOverlay" main.py
 ```
 > **Catatan:** Hasil *build* akan berada di dalam folder `dist/StreamChatOverlay/`.
 

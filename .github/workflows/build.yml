@@ -34,7 +34,7 @@ jobs:
     - name: Build EXE with PyInstaller
       # Baris perintah dijadikan satu untuk menghindari masalah parsing argumen di PowerShell Windows.
       # Ditambahkan pengecualian file Qt untuk mencegah crash saat aplikasi dibuka.
-      run: pyinstaller --clean --noconfirm --noconsole --onedir --upx-exclude="Qt*.dll" --name "StreamChatOverlay" stream-chat.py
+      run: pyinstaller --clean --noconfirm --noconsole --onedir --upx-exclude="Qt*.dll" --name "StreamChatOverlay" main.py
 
     - name: Zip output folder
       run: |
