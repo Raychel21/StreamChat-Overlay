@@ -29,12 +29,11 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install PySide6 pyinstaller pyinstaller-hooks-contrib --no-cache-dir
+        pip install -r requirements.txt --no-cache-dir
 
     - name: Build EXE with PyInstaller
-      # Baris perintah dijadikan satu untuk menghindari masalah parsing argumen di PowerShell Windows.
-      # Ditambahkan pengecualian file Qt untuk mencegah crash saat aplikasi dibuka.
-      run: pyinstaller --clean --noconfirm --noconsole --onedir --upx-exclude="Qt*.dll" --name "StreamChatOverlay" main.py
+      # Baris perintah menggunakan file spec untuk memastikan hiddenimports (requests, pyttsx3) ter-bundle.
+      run: pyinstaller --clean --noconfirm StreamChatOverlay.spec
 
     - name: Zip output folder
       run: |

@@ -55,13 +55,13 @@ Sangat disarankan menggunakan virtual environment atau package manager seperti `
 **Menggunakan pip biasa:**
 ```bash
 python -m pip install --upgrade pip
-pip install PySide6 pyinstaller pyinstaller-hooks-contrib
+pip install -r requirements.txt
 ```
 
 **Menggunakan uv (Jauh lebih cepat):**
 ```bash
 pip install uv
-uv pip install PySide6 pyinstaller pyinstaller-hooks-contrib
+uv pip install -r requirements.txt
 ```
 
 ### 3. Menjalankan Aplikasi
@@ -73,7 +73,7 @@ python main.py
 ### 4. Build menjadi .exe
 Untuk melakukan *compile* dari `.py` menjadi file `.exe` yang siap digunakan (standalone):
 ```bash
-pyinstaller --clean --noconfirm --noconsole --onedir --upx-exclude="Qt*.dll" --name "StreamChatOverlay" main.py
+pyinstaller --clean --noconfirm StreamChatOverlay.spec
 ```
 > **Catatan:** Hasil *build* akan berada di dalam folder `dist/StreamChatOverlay/`.
 

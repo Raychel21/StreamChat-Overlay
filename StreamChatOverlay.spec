@@ -6,7 +6,12 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=[
+        'requests',
+        'pyttsx3',
+        'pyttsx3.drivers',
+        'pyttsx3.drivers.sapi5',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
