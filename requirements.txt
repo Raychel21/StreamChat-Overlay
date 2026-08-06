@@ -1,5 +1,6 @@
 PySide6
 requests
 pyttsx3
+TikTokLive
 pyinstaller
 pyinstaller-hooks-contrib
