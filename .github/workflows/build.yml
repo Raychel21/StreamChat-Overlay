@@ -3,11 +3,8 @@ name: Build EXE
 on:
   push:
     branches: [ main ]
-    tags:
-      - 'v*'
-      - '*'
   release:
-    types: [published, created, edited, prereleased]
+    types: [published]
   workflow_dispatch:
 
 permissions:
