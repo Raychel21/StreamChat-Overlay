@@ -35,10 +35,31 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt --no-cache-dir
+        pip install --force-reinstall --no-cache-dir -r requirements.txt
+
+    - name: Verify key packages installed
+      run: |
+        python -c "import requests; print('requests OK:', requests.__version__)"
+        python -c "import PySide6; print('PySide6 OK')"
+        python -c "import pyttsx3; print('pyttsx3 OK')"
+        python -c "import TikTokLive; print('TikTokLive OK')"
 
     - name: Build EXE with PyInstaller
       run: pyinstaller --clean --noconfirm StreamChatOverlay.spec
+
+    - name: Normalize timestamps (semua file pakai waktu yang sama)
+      run: |
+        $buildTime = Get-Date
+        Get-ChildItem -Path dist\StreamChatOverlay -Recurse | ForEach-Object {
+          $_.LastWriteTime = $buildTime
+          $_.CreationTime  = $buildTime
+        }
+        $exePath = "dist\StreamChatOverlay\StreamChatOverlay.exe"
+        if (Test-Path $exePath) {
+          (Get-Item $exePath).LastWriteTime = $buildTime
+          (Get-Item $exePath).CreationTime  = $buildTime
+        }
+        Write-Output "Timestamps normalized to: $buildTime"
 
     - name: Zip output folder
       run: |
