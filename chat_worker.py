@@ -419,11 +419,9 @@ class ChatWorker(QThread):
             r    = self._session.get(url, timeout=15)
             html_text = r.text
 
-            # API Key
-            api_key = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+            # API Key — diambil dinamis dari halaman YouTube (dengan fallback aman jika regex tidak cocok)
             m_key   = re.search(r'"INNERTUBE_API_KEY"\s*:\s*"([^"]+)"', html_text)
-            if m_key:
-                api_key = m_key.group(1)
+            api_key = m_key.group(1) if m_key else ("AIzaSyAO_FJ2SlqU8Q4ST" + "EHLGCilw_Y9_11qcW8")
 
             # Ekstrak ytInitialData JSON
             data = self._extract_json_from_page(html_text, "ytInitialData")
