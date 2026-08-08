@@ -341,7 +341,7 @@ class ChatWorker(QThread):
             try:
                 continuation, api_key = self._fetch_initial_data(video_id)
 
-                if not continuation:
+                if not continuation or not api_key:
                     retry_count += 1
                     if retry_count > max_retries:
                         self.error_occurred.emit(
@@ -419,9 +419,15 @@ class ChatWorker(QThread):
             r    = self._session.get(url, timeout=15)
             html_text = r.text
 
-            # API Key — diambil dinamis dari halaman YouTube (dengan fallback aman jika regex tidak cocok)
-            m_key   = re.search(r'"INNERTUBE_API_KEY"\s*:\s*"([^"]+)"', html_text)
-            api_key = m_key.group(1) if m_key else ("AIzaSyAO_FJ2SlqU8Q4ST" + "EHLGCilw_Y9_11qcW8")
+            # API Key — diambil 100% secara dinamis dari halaman YouTube
+            m_key = re.search(r'"INNERTUBE_API_KEY"\s*:\s*"([^"]+)"', html_text)
+            if not m_key:
+                m_key = re.search(r'INNERTUBE_API_KEY["\s:]+([^"}\s,]+)', html_text)
+            api_key = m_key.group(1) if m_key else None
+
+            if not api_key:
+                print("[ChatWorker] INNERTUBE_API_KEY tidak ditemukan.")
+                return None, None
 
             # Ekstrak ytInitialData JSON
             data = self._extract_json_from_page(html_text, "ytInitialData")
